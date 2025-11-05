@@ -26,6 +26,7 @@ out/
 # Compiled Static libraries
 *.a
 *.lib
+!sdk/lib/*.lib
 *.lai
 
 # Executables
