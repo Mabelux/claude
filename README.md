@@ -32,14 +32,17 @@ dhyana-camera-control/
 ├── CMakeLists.txt              # Configuración de CMake
 ├── README.md                   # Este archivo
 ├── .gitignore                  # Archivos ignorados por Git
+├── copy_dlls.bat               # Script para copiar DLLs del SDK
 ├── sdk/                        # SDK de Tucsen
 │   ├── inc/                    # Headers del SDK
 │   │   ├── TUCamApi.h
 │   │   └── TUDefine.h
-│   └── lib/                    # Librerías y DLLs
+│   └── lib/                    # Librerías y DLLs (37 archivos)
 │       ├── TUCam.lib
 │       ├── TUCam.dll
-│       └── ...
+│       ├── GCBase_MD_VC141_v3_2.dll
+│       ├── SphinxLib.dll
+│       └── ... (33 DLLs más)
 ├── include/                    # Headers del proyecto
 │   ├── DhyanaCamera.h          # Clase wrapper de la cámara
 │   └── DhyanaTypes.h           # Tipos y estructuras
@@ -86,6 +89,14 @@ dhyana-camera-control/
 
 3. **Ejecutable:**
    - `build/Release/dhyana_control.exe`
+
+4. **Copiar DLLs (si es necesario):**
+   ```cmd
+   cd ..
+   copy_dlls.bat build\Release
+   ```
+
+   **Nota:** CMake debería copiar automáticamente todas las DLLs del SDK. Si encuentras errores sobre DLLs faltantes, usa el script `copy_dlls.bat`.
 
 ### Opción 3: Visual Studio Code
 
@@ -229,6 +240,49 @@ dhyana_control.exe ^
 
 ## Solución de Problemas
 
+### ⚠️ "DLL not found" o "Cannot proceed because [nombre].dll was not found"
+
+Este es un problema común después de compilar. El ejecutable necesita las DLLs del SDK en el mismo directorio.
+
+**Solución Automática (Recomendada):**
+
+CMake debería copiar automáticamente todas las DLLs al compilar. Si no funcionó:
+
+1. **Recompilar limpiando el proyecto:**
+   ```cmd
+   cd build
+   cmake --build . --config Release --clean-first
+   ```
+
+**Solución Manual:**
+
+Si el problema persiste, usar el script incluido:
+
+```cmd
+copy_dlls.bat
+```
+
+O especificar el directorio:
+```cmd
+copy_dlls.bat build\Release
+copy_dlls.bat build\Debug
+```
+
+**Solución Manual Alternativa:**
+
+Copiar todas las DLLs manualmente:
+```cmd
+xcopy /Y sdk\lib\*.dll build\Release\
+```
+
+**DLLs Críticas que se necesitan:**
+- TUCam.dll
+- MultiCam.dll
+- GCBase_MD_VC141_v3_2.dll
+- SphinxLib.dll
+- MvCameraControl.dll
+- Y otras ~32 DLLs adicionales del SDK
+
 ### "No cameras found"
 1. Verificar que la cámara está conectada (USB/Cable)
 2. Verificar que los drivers están instalados
@@ -236,9 +290,10 @@ dhyana_control.exe ^
 4. Comprobar en el Administrador de Dispositivos de Windows
 
 ### "Failed to initialize SDK"
-1. Verificar que las DLLs del SDK están en el mismo directorio que el .exe
+1. Verificar que las DLLs del SDK están en el mismo directorio que el .exe (ver arriba)
 2. Verificar que no hay otra aplicación usando la cámara
 3. Reiniciar la cámara (desconectar/conectar)
+4. Ejecutar como Administrador si es necesario
 
 ### "Failed to allocate buffer"
 1. Reducir el número de buffers

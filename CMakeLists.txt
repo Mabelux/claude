@@ -50,20 +50,19 @@ target_link_libraries(dhyana_control ${TUCAM_LIBRARY})
 
 # Copiar DLLs necesarias al directorio de salida en Windows
 if(WIN32)
-    # Lista de DLLs del SDK de Tucsen
-    set(TUCAM_DLLS
-        TUCam.dll
-        MultiCam.dll
-    )
+    # Copiar TODAS las DLLs del SDK al directorio de salida
+    file(GLOB SDK_DLLS "${CMAKE_SOURCE_DIR}/sdk/lib/*.dll")
 
-    foreach(DLL ${TUCAM_DLLS})
+    foreach(DLL_PATH ${SDK_DLLS})
         add_custom_command(TARGET dhyana_control POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${CMAKE_SOURCE_DIR}/sdk/lib/${DLL}"
-                "$<TARGET_FILE_DIR:dhyana_control>/${DLL}"
-            COMMENT "Copying ${DLL} to output directory"
+                "${DLL_PATH}"
+                "$<TARGET_FILE_DIR:dhyana_control>/"
+            COMMENT "Copying SDK DLLs to output directory"
         )
     endforeach()
+
+    message(STATUS "Found ${SDK_DLLS} SDK DLLs to copy")
 endif()
 
 # Configuración de instalación
