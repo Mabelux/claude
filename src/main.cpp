@@ -25,6 +25,18 @@ void PauseBeforeExit() {
 }
 
 /**
+ * @brief Extrae el nombre del archivo de la ruta completa
+ */
+std::string GetProgramName(const char* fullPath) {
+    std::string path(fullPath);
+    size_t lastSlash = path.find_last_of("\\/");
+    if (lastSlash != std::string::npos) {
+        return path.substr(lastSlash + 1);
+    }
+    return path;
+}
+
+/**
  * @brief Muestra comandos rápidos
  */
 void ShowQuickCommands(const char* programName) {
@@ -130,12 +142,16 @@ void ShowCameraInfo(Camera& camera) {
 bool ParseArguments(int argc, char* argv[], CaptureConfig& config, int& cameraIndex, bool& showInfo) {
     std::map<std::string, std::string> args;
 
+    // Extraer solo el nombre del ejecutable
+    std::string programName = GetProgramName(argv[0]);
+    const char* exeName = programName.c_str();
+
     // Convertir argumentos a mapa
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
 
         if (arg == "-h" || arg == "--help") {
-            ShowHelp(argv[0]);
+            ShowHelp(exeName);
             return false;
         } else if (arg == "-i" || arg == "--info") {
             showInfo = true;
@@ -204,6 +220,10 @@ int main(int argc, char* argv[]) {
     std::cout << "  Dhyana Camera Control v1.0.0" << std::endl;
     std::cout << "==================================================" << std::endl;
 
+    // Extraer solo el nombre del ejecutable (sin la ruta completa)
+    std::string programName = GetProgramName(argv[0]);
+    const char* exeName = programName.c_str();
+
     // Configuración por defecto
     CaptureConfig config;
     int cameraIndex = 0;
@@ -211,7 +231,7 @@ int main(int argc, char* argv[]) {
 
     // Si no hay argumentos, mostrar comandos rápidos
     if (argc == 1) {
-        ShowQuickCommands(argv[0]);
+        ShowQuickCommands(exeName);
         PauseBeforeExit();
         return 0;
     }
