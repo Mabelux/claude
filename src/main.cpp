@@ -5,7 +5,49 @@
 #include <map>
 #include <cstdlib>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 using namespace Dhyana;
+
+/**
+ * @brief Pausa antes de salir (útil en Windows)
+ */
+void PauseBeforeExit() {
+#ifdef _WIN32
+    std::cout << "\nPresiona cualquier tecla para salir..." << std::endl;
+    system("pause >nul");
+#else
+    std::cout << "\nPresiona Enter para salir..." << std::endl;
+    std::cin.get();
+#endif
+}
+
+/**
+ * @brief Muestra comandos rápidos
+ */
+void ShowQuickCommands(const char* programName) {
+    std::cout << "\n==================================================" << std::endl;
+    std::cout << "  Comandos Rapidos - Dhyana Camera Control" << std::endl;
+    std::cout << "==================================================" << std::endl;
+    std::cout << "\nComandos disponibles:" << std::endl;
+    std::cout << "  " << programName << " -h                  # Ayuda completa" << std::endl;
+    std::cout << "  " << programName << " -i                  # Informacion de camara" << std::endl;
+    std::cout << "  " << programName << " -e 50               # Captura con exposicion 50ms" << std::endl;
+    std::cout << "  " << programName << " -e 100 -n 10        # Captura 10 frames" << std::endl;
+    std::cout << "  " << programName << " -e 100 -g 2.0       # Con ganancia 2.0" << std::endl;
+    std::cout << "  " << programName << " --binning 2 2       # Con binning 2x2" << std::endl;
+    std::cout << "\nParametros principales:" << std::endl;
+    std::cout << "  -e  Exposicion (ms)     -g  Ganancia         -n  Numero de frames" << std::endl;
+    std::cout << "  -b  Buffer frames       -o  Directorio       -f  Formato (TIFF/PNG)" << std::endl;
+    std::cout << "  -i  Info de camara      -h  Ayuda completa" << std::endl;
+    std::cout << "\nEjemplos de uso rapido:" << std::endl;
+    std::cout << "  " << programName << " -e 50 -n 5 -o ./capturas" << std::endl;
+    std::cout << "  " << programName << " -e 100 --binning 2 2 -n 10" << std::endl;
+    std::cout << "\nPara ver todas las opciones, usa: " << programName << " -h" << std::endl;
+    std::cout << "==================================================" << std::endl;
+}
 
 /**
  * @brief Muestra la ayuda del programa
@@ -167,14 +209,16 @@ int main(int argc, char* argv[]) {
     int cameraIndex = 0;
     bool showInfo = false;
 
-    // Si no hay argumentos, mostrar ayuda
+    // Si no hay argumentos, mostrar comandos rápidos
     if (argc == 1) {
-        ShowHelp(argv[0]);
+        ShowQuickCommands(argv[0]);
+        PauseBeforeExit();
         return 0;
     }
 
     // Parsear argumentos
     if (!ParseArguments(argc, argv, config, cameraIndex, showInfo)) {
+        PauseBeforeExit();
         return 0; // Salir si se mostró ayuda
     }
 
@@ -185,27 +229,56 @@ int main(int argc, char* argv[]) {
     std::cout << "\nInitializing camera SDK..." << std::endl;
     ErrorCode err = camera.Initialize();
     if (err != ErrorCode::Success) {
-        std::cerr << "Error: Failed to initialize SDK: "
-                  << ErrorCodeToString(err) << std::endl;
+        std::cerr << "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+        std::cerr << "  ERROR: Failed to initialize SDK" << std::endl;
+        std::cerr << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+        std::cerr << "\nError code: " << ErrorCodeToString(err) << std::endl;
+        std::cerr << "\nPosibles causas:" << std::endl;
+        std::cerr << "  1. Las DLLs del SDK no estan en el directorio del .exe" << std::endl;
+        std::cerr << "  2. Falta alguna DLL (copiar todas desde sdk/lib/)" << std::endl;
+        std::cerr << "  3. El SDK no esta instalado correctamente" << std::endl;
+        std::cerr << "\nSolucion: Ejecuta copy_dlls.bat para copiar las DLLs" << std::endl;
+        PauseBeforeExit();
         return 1;
     }
 
     // Verificar si hay cámaras disponibles
     if (camera.GetCameraCount() == 0) {
-        std::cerr << "Error: No cameras found!" << std::endl;
-        std::cerr << "Please check:" << std::endl;
-        std::cerr << "  1. Camera is connected" << std::endl;
-        std::cerr << "  2. Camera drivers are installed" << std::endl;
-        std::cerr << "  3. Camera has power" << std::endl;
+        std::cerr << "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+        std::cerr << "  ERROR: No se encontro ninguna camara conectada" << std::endl;
+        std::cerr << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+        std::cerr << "\nVerifica lo siguiente:" << std::endl;
+        std::cerr << "  1. La camara Dhyana esta conectada al USB/Puerto" << std::endl;
+        std::cerr << "  2. Los drivers de la camara estan instalados" << std::endl;
+        std::cerr << "  3. La camara tiene alimentacion electrica" << std::endl;
+        std::cerr << "  4. El cable USB/conexion esta funcionando" << std::endl;
+        std::cerr << "  5. La camara aparece en el Administrador de Dispositivos" << std::endl;
+        std::cerr << "\nNOTA: El SDK se inicializo correctamente, pero no detecta camaras." << std::endl;
+        std::cerr << "      Esto significa que el software funciona, pero la camara" << std::endl;
+        std::cerr << "      no esta conectada o no tiene los drivers instalados." << std::endl;
+        PauseBeforeExit();
         return 1;
     }
+
+    std::cout << "Camara(s) detectada(s): " << camera.GetCameraCount() << std::endl;
 
     // Abrir cámara
     std::cout << "Opening camera " << cameraIndex << "..." << std::endl;
     err = camera.Open(cameraIndex);
     if (err != ErrorCode::Success) {
-        std::cerr << "Error: Failed to open camera: "
-                  << ErrorCodeToString(err) << std::endl;
+        std::cerr << "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+        std::cerr << "  ERROR: No se pudo abrir la camara" << std::endl;
+        std::cerr << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+        std::cerr << "\nError code: " << ErrorCodeToString(err) << std::endl;
+        std::cerr << "\nPosibles causas:" << std::endl;
+        std::cerr << "  1. La camara esta siendo usada por otra aplicacion" << std::endl;
+        std::cerr << "  2. No tienes permisos para acceder a la camara" << std::endl;
+        std::cerr << "  3. El indice de camara es incorrecto" << std::endl;
+        std::cerr << "\nSolucion:" << std::endl;
+        std::cerr << "  - Cierra otras aplicaciones que usen la camara" << std::endl;
+        std::cerr << "  - Desconecta y reconecta la camara" << std::endl;
+        std::cerr << "  - Ejecuta como Administrador" << std::endl;
+        PauseBeforeExit();
         return 1;
     }
 
@@ -214,6 +287,7 @@ int main(int argc, char* argv[]) {
         ShowCameraInfo(camera);
         if (argc == 2 || argc == 3) {
             // Solo se pidió info, salir
+            PauseBeforeExit();
             return 0;
         }
     }
@@ -244,12 +318,18 @@ int main(int argc, char* argv[]) {
     CaptureStats stats;
     err = camera.CaptureFrames(config, &stats);
     if (err != ErrorCode::Success) {
-        std::cerr << "\nError: Capture failed: "
-                  << ErrorCodeToString(err) << std::endl;
+        std::cerr << "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+        std::cerr << "  ERROR: La captura fallo" << std::endl;
+        std::cerr << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+        std::cerr << "\nError code: " << ErrorCodeToString(err) << std::endl;
+        PauseBeforeExit();
         return 1;
     }
 
-    std::cout << "\nCapture completed successfully!" << std::endl;
+    std::cout << "\n==================================================" << std::endl;
+    std::cout << "  CAPTURA COMPLETADA EXITOSAMENTE!" << std::endl;
+    std::cout << "==================================================" << std::endl;
 
+    PauseBeforeExit();
     return 0;
 }
