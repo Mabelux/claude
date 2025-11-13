@@ -10,6 +10,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 if(WIN32)
     add_definitions(-DWIN32 -D_WINDOWS)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
+    # Linkear estáticamente con el runtime de Visual Studio
+    # Esto evita necesitar DLLs de Visual C++ Redistributables
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
 # Incluir directorios del SDK de Tucsen
