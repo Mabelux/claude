@@ -242,46 +242,90 @@ dhyana_control.exe ^
 
 ### ⚠️ "DLL not found" o "Cannot proceed because [nombre].dll was not found"
 
-Este es un problema común después de compilar. El ejecutable necesita las DLLs del SDK en el mismo directorio.
+Este es un problema común después de compilar. El ejecutable necesita las DLLs del SDK Y las DLLs de Visual C++ Runtime en el mismo directorio o en el PATH del sistema.
 
-**Solución Automática (Recomendada):**
+#### **Solución 1: Compilación Automática (Recomendada)**
 
-CMake debería copiar automáticamente todas las DLLs al compilar. Si no funcionó:
+CMake está configurado para copiar automáticamente TODAS las DLLs necesarias al compilar:
+- 37 DLLs del SDK de Tucsen
+- DLLs de Visual C++ 2013 Runtime (msvcp120.dll, msvcr120.dll)
+- DLLs de Visual C++ 2015-2022 Runtime (msvcp140.dll, vcruntime140.dll, etc.)
+- DLLs de sistema de Windows (msvfw32.dll, msacm32.dll, winmm.dll, mpr.dll)
 
-1. **Recompilar limpiando el proyecto:**
-   ```cmd
-   cd build
-   cmake --build . --config Release --clean-first
-   ```
-
-**Solución Manual:**
-
-Si el problema persiste, usar el script incluido:
-
+Si no funcionó, recompilar limpiando el proyecto:
 ```cmd
-copy_dlls.bat
+cd build
+cmake --build . --config Release --clean-first
 ```
 
-O especificar el directorio:
+#### **Solución 2: Script Manual**
+
+Si el problema persiste, usar los scripts incluidos:
+
 ```cmd
+# Copiar DLLs del SDK
 copy_dlls.bat build\Release
-copy_dlls.bat build\Debug
+
+# Copiar DLLs de runtime de Visual C++
+copy_all_runtimes.ps1 build\Release
 ```
 
-**Solución Manual Alternativa:**
+#### **Solución 3: Agregar SDK de Tucsen al PATH del Sistema (Recomendado para múltiples proyectos)**
 
-Copiar todas las DLLs manualmente:
+Si trabajas con múltiples ejecutables que usan el SDK de Tucsen, agregar el SDK al PATH:
+
+**PowerShell (Ejecutar como Administrador):**
+```powershell
+# Agregar directorio del SDK de Tucsen al PATH del sistema
+$tucsenPath = "C:\Program Files\TUCam_SDK\sdk\lib\x64"
+[Environment]::SetEnvironmentVariable(
+    "Path",
+    [Environment]::GetEnvironmentVariable("Path", "Machine") + ";$tucsenPath",
+    "Machine"
+)
+
+Write-Host "PATH actualizado. Reinicia PowerShell o VS Code." -ForegroundColor Green
+```
+
+**Después de agregar al PATH:**
+- Reiniciar PowerShell, VS Code o el terminal
+- Los ejecutables encontrarán automáticamente las DLLs sin necesidad de copiarlas
+
+**Verificar que el PATH se actualizó:**
+```powershell
+$env:Path -split ';' | Select-String "TUCam"
+```
+
+#### **Solución 4: Copiar DLLs Manualmente**
+
 ```cmd
+# Copiar DLLs del SDK
 xcopy /Y sdk\lib\*.dll build\Release\
+
+# Copiar DLLs de Visual C++ Runtime desde System32
+copy "C:\Windows\System32\msvcp120.dll" build\Release\
+copy "C:\Windows\System32\msvcr120.dll" build\Release\
+copy "C:\Windows\System32\msvcp140.dll" build\Release\
+copy "C:\Windows\System32\vcruntime140.dll" build\Release\
+copy "C:\Windows\System32\vcruntime140_1.dll" build\Release\
 ```
 
-**DLLs Críticas que se necesitan:**
-- TUCam.dll
+**Nota sobre DLLs de Runtime:**
+- En PCs con Visual Studio instalado, las DLLs están en PATH automáticamente
+- En PCs sin Visual Studio (despliegue), necesitas copiarlas o instalar Visual C++ Redistributables
+
+#### **DLLs Críticas del SDK:**
+- TUCam.dll (17 MB - DLL principal)
 - MultiCam.dll
 - GCBase_MD_VC141_v3_2.dll
 - SphinxLib.dll
 - MvCameraControl.dll
 - Y otras ~32 DLLs adicionales del SDK
+
+#### **DLLs de Runtime Necesarias:**
+- **Visual C++ 2013**: msvcp120.dll, msvcr120.dll (requeridas por DLLs del SDK)
+- **Visual C++ 2015-2022**: msvcp140.dll, vcruntime140.dll, vcruntime140_1.dll (requeridas por tu ejecutable)
+- **Sistema Windows**: msvfw32.dll, msacm32.dll, winmm.dll, mpr.dll (para video/multimedia)
 
 ### "No cameras found"
 1. Verificar que la cámara está conectada (USB/Cable)

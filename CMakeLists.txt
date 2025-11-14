@@ -54,7 +54,7 @@ target_link_libraries(dhyana_control ${TUCAM_LIBRARY})
 
 # Copiar DLLs necesarias al directorio de salida en Windows
 if(WIN32)
-    # Copiar TODAS las DLLs del SDK al directorio de salida
+    # 1. Copiar TODAS las DLLs del SDK al directorio de salida
     file(GLOB SDK_DLLS "${CMAKE_SOURCE_DIR}/sdk/lib/*.dll")
 
     foreach(DLL_PATH ${SDK_DLLS})
@@ -62,11 +62,62 @@ if(WIN32)
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 "${DLL_PATH}"
                 "$<TARGET_FILE_DIR:dhyana_control>/"
-            COMMENT "Copying SDK DLLs to output directory"
+            COMMENT "Copying SDK DLL: ${DLL_PATH}"
         )
     endforeach()
 
-    message(STATUS "Found ${SDK_DLLS} SDK DLLs to copy")
+    list(LENGTH SDK_DLLS SDK_DLL_COUNT)
+    message(STATUS "Found ${SDK_DLL_COUNT} SDK DLLs to copy")
+
+    # 2. Copiar DLLs de Visual C++ Runtime necesarias
+    # Lista de DLLs de runtime requeridas por las DLLs del SDK de Tucsen
+    set(RUNTIME_DLLS
+        # Visual C++ 2013 Runtime (VC120) - requerido por algunas DLLs del SDK
+        "msvcp120.dll"
+        "msvcr120.dll"
+        # Visual C++ 2015-2022 Runtime (VC140/141/142/143) - requerido por nuestro ejecutable
+        "msvcp140.dll"
+        "vcruntime140.dll"
+        "vcruntime140_1.dll"
+        # DLLs de sistema de Windows (multimedia/video)
+        "msvfw32.dll"
+        "msacm32.dll"
+        "winmm.dll"
+        "mpr.dll"
+    )
+
+    foreach(RUNTIME_DLL ${RUNTIME_DLLS})
+        # Buscar primero en C:\Windows\System32
+        set(RUNTIME_DLL_PATH "C:/Windows/System32/${RUNTIME_DLL}")
+
+        if(EXISTS "${RUNTIME_DLL_PATH}")
+            add_custom_command(TARGET dhyana_control POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${RUNTIME_DLL_PATH}"
+                    "$<TARGET_FILE_DIR:dhyana_control>/"
+                COMMENT "Copying runtime DLL: ${RUNTIME_DLL}"
+            )
+            message(STATUS "Will copy runtime DLL: ${RUNTIME_DLL} from System32")
+        else()
+            # Si no está en System32, buscar en el SDK de Tucsen instalado
+            # (útil en PCs sin Visual Studio instalado)
+            set(TUCSEN_SDK_PATH "C:/Program Files/TUCam_SDK/sdk/lib/x64/${RUNTIME_DLL}")
+            if(EXISTS "${TUCSEN_SDK_PATH}")
+                add_custom_command(TARGET dhyana_control POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        "${TUCSEN_SDK_PATH}"
+                        "$<TARGET_FILE_DIR:dhyana_control>/"
+                    COMMENT "Copying runtime DLL: ${RUNTIME_DLL} from Tucsen SDK"
+                )
+                message(STATUS "Will copy runtime DLL: ${RUNTIME_DLL} from Tucsen SDK")
+            else()
+                message(WARNING "${RUNTIME_DLL} not found in System32 or Tucsen SDK. May need manual installation.")
+            endif()
+        endif()
+    endforeach()
+
+    message(STATUS "Runtime DLLs will be copied automatically during build")
+    message(STATUS "Note: If build succeeds but executable fails to run, ensure Visual C++ Redistributables are installed")
 endif()
 
 # Configuración de instalación
