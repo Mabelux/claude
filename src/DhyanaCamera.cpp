@@ -185,14 +185,15 @@ ErrorCode Camera::SetExposure(double exposureMs)
     }
 
     // Primero verificar si la propiedad está soportada y obtener su rango
-    TUCAM_CAPA_ATTR capaAttr;
-    memset(&capaAttr, 0, sizeof(TUCAM_CAPA_ATTR));
-    capaAttr.idCapa = TUIDC_EXPOSURETM;
+    TUCAM_PROP_ATTR propAttr;
+    memset(&propAttr, 0, sizeof(TUCAM_PROP_ATTR));
+    propAttr.idProp = TUIDP_EXPOSURETM;
+    propAttr.nIdxChn = 0;
 
-    TUCAMRET ret = TUCAM_Capa_GetAttr(hCamera_, &capaAttr);
+    TUCAMRET ret = TUCAM_Prop_GetAttr(hCamera_, &propAttr);
     if (TUCAMRET_SUCCESS == ret) {
-        double minExp = capaAttr.dbValMin;
-        double maxExp = capaAttr.dbValMax;
+        double minExp = propAttr.dbValMin;
+        double maxExp = propAttr.dbValMax;
 
         std::cout << "Exposure range: " << minExp << " - " << maxExp << " ms" << std::endl;
 

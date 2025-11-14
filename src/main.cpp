@@ -147,39 +147,42 @@ void ShowCameraCapabilities(Camera& camera) {
         return;
     }
 
-    // Capacidad de exposición
-    TUCAM_CAPA_ATTR capaAttr;
-    memset(&capaAttr, 0, sizeof(TUCAM_CAPA_ATTR));
-    capaAttr.idCapa = TUIDC_EXPOSURETM;
+    // Propiedad de exposición (usa PROP_ATTR)
+    TUCAM_PROP_ATTR propAttr;
+    memset(&propAttr, 0, sizeof(TUCAM_PROP_ATTR));
+    propAttr.idProp = TUIDP_EXPOSURETM;
+    propAttr.nIdxChn = 0;
 
-    TUCAMRET ret = TUCAM_Capa_GetAttr(handle, &capaAttr);
+    TUCAMRET ret = TUCAM_Prop_GetAttr(handle, &propAttr);
     if (TUCAMRET_SUCCESS == ret) {
         std::cout << "\nExposicion:" << std::endl;
-        std::cout << "  Rango: " << capaAttr.dbValMin << " - "
-                  << capaAttr.dbValMax << " ms" << std::endl;
-        std::cout << "  Paso: " << capaAttr.dbValStep << " ms" << std::endl;
-        std::cout << "  Por defecto: " << capaAttr.dbValDft << " ms" << std::endl;
+        std::cout << "  Rango: " << propAttr.dbValMin << " - "
+                  << propAttr.dbValMax << " ms" << std::endl;
+        std::cout << "  Paso: " << propAttr.dbValStep << " ms" << std::endl;
+        std::cout << "  Por defecto: " << propAttr.dbValDft << " ms" << std::endl;
     } else {
         std::cout << "\nExposicion: NO SOPORTADA (Error: 0x"
                   << std::hex << ret << std::dec << ")" << std::endl;
     }
 
-    // Capacidad de ganancia
-    memset(&capaAttr, 0, sizeof(TUCAM_CAPA_ATTR));
-    capaAttr.idCapa = TUIDC_GAIN;
-    ret = TUCAM_Capa_GetAttr(handle, &capaAttr);
+    // Propiedad de ganancia (usa PROP_ATTR)
+    memset(&propAttr, 0, sizeof(TUCAM_PROP_ATTR));
+    propAttr.idProp = TUIDP_GLOBALGAIN;
+    propAttr.nIdxChn = 0;
+    ret = TUCAM_Prop_GetAttr(handle, &propAttr);
     if (TUCAMRET_SUCCESS == ret) {
         std::cout << "\nGanancia:" << std::endl;
-        std::cout << "  Rango: " << capaAttr.dbValMin << " - "
-                  << capaAttr.dbValMax << std::endl;
-        std::cout << "  Paso: " << capaAttr.dbValStep << std::endl;
-        std::cout << "  Por defecto: " << capaAttr.dbValDft << std::endl;
+        std::cout << "  Rango: " << propAttr.dbValMin << " - "
+                  << propAttr.dbValMax << std::endl;
+        std::cout << "  Paso: " << propAttr.dbValStep << std::endl;
+        std::cout << "  Por defecto: " << propAttr.dbValDft << std::endl;
     } else {
         std::cout << "\nGanancia: NO SOPORTADA (Error: 0x"
                   << std::hex << ret << std::dec << ")" << std::endl;
     }
 
-    // Resolución
+    // Capacidad de resolución (usa CAPA_ATTR)
+    TUCAM_CAPA_ATTR capaAttr;
     memset(&capaAttr, 0, sizeof(TUCAM_CAPA_ATTR));
     capaAttr.idCapa = TUIDC_RESOLUTION;
     ret = TUCAM_Capa_GetAttr(handle, &capaAttr);
