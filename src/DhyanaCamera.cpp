@@ -119,7 +119,7 @@ ErrorCode Camera::Open(uint32_t cameraIndex)
     memset(&triggerAttr, 0, sizeof(TUCAM_TRIGGER_ATTR));
     triggerAttr.nTgrMode = TUCCM_SEQUENCE;  // Modo secuencia (continuo)
     triggerAttr.nExpMode = TUCTE_EXPTM;     // Exposición por tiempo
-    triggerAttr.nEdgeMode = TUCTE_RISING;   // Flanco ascendente
+    triggerAttr.nEdgeMode = TUCTD_RISING;   // Flanco ascendente
     triggerAttr.nFrames = 1;                // 1 frame por trigger
 
     ret = TUCAM_Cap_SetTrigger(hCamera_, triggerAttr);
