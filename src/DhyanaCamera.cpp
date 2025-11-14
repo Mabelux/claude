@@ -98,6 +98,39 @@ ErrorCode Camera::Open(uint32_t cameraIndex)
 
     std::cout << "Camera opened successfully." << std::endl;
 
+    // Inicialización básica de la cámara después de abrirla
+    // Esto es necesario para que las propiedades funcionen correctamente
+
+    // 1. Asignar buffer temporal para permitir configuración
+    TUCAM_FRAME frame;
+    memset(&frame, 0, sizeof(TUCAM_FRAME));
+    frame.ucFormatGet = TUFRM_FMT_RAW;
+    frame.uiRsdSize = 1;  // 1 buffer temporal
+
+    ret = TUCAM_Buf_Alloc(hCamera_, &frame);
+    if (TUCAMRET_SUCCESS != ret) {
+        std::cerr << "Warning: Failed to allocate initial buffer. Error: 0x"
+                  << std::hex << ret << std::dec << std::endl;
+        // No es crítico, continuamos
+    }
+
+    // 2. Configurar modo de trigger a software (modo libre)
+    TUCAM_TRIGGER_ATTR triggerAttr;
+    memset(&triggerAttr, 0, sizeof(TUCAM_TRIGGER_ATTR));
+    triggerAttr.nTgrMode = TUCCM_SEQUENCE;  // Modo secuencia (continuo)
+    triggerAttr.nExpMode = TUCTE_EXPTM;     // Exposición por tiempo
+    triggerAttr.nEdgeMode = TUCTE_RISING;   // Flanco ascendente
+    triggerAttr.nFrames = 1;                // 1 frame por trigger
+
+    ret = TUCAM_Cap_SetTrigger(hCamera_, triggerAttr);
+    if (TUCAMRET_SUCCESS != ret) {
+        std::cerr << "Warning: Failed to set trigger mode. Error: 0x"
+                  << std::hex << ret << std::dec << std::endl;
+        // No es crítico, continuamos
+    }
+
+    std::cout << "Camera initialized and ready." << std::endl;
+
     return ErrorCode::Success;
 }
 
