@@ -184,10 +184,44 @@ ErrorCode Camera::SetExposure(double exposureMs)
         return ErrorCode::CameraNotInitialized;
     }
 
-    TUCAMRET ret = TUCAM_Prop_SetValue(hCamera_, TUIDP_EXPOSURETM, exposureMs);
+    // Primero verificar si la propiedad está soportada y obtener su rango
+    TUCAM_CAPA_ATTR capaAttr;
+    memset(&capaAttr, 0, sizeof(TUCAM_CAPA_ATTR));
+    capaAttr.idCapa = TUIDC_EXPOSURETM;
+
+    TUCAMRET ret = TUCAM_Capa_GetAttr(hCamera_, &capaAttr);
+    if (TUCAMRET_SUCCESS == ret) {
+        double minExp = capaAttr.dbValMin;
+        double maxExp = capaAttr.dbValMax;
+
+        std::cout << "Exposure range: " << minExp << " - " << maxExp << " ms" << std::endl;
+
+        // Verificar si el valor está dentro del rango
+        if (exposureMs < minExp || exposureMs > maxExp) {
+            std::cerr << "Warning: Exposure " << exposureMs
+                      << " ms out of range [" << minExp << ", " << maxExp << "]" << std::endl;
+            // Ajustar al rango válido
+            if (exposureMs < minExp) exposureMs = minExp;
+            if (exposureMs > maxExp) exposureMs = maxExp;
+            std::cout << "Adjusted to: " << exposureMs << " ms" << std::endl;
+        }
+    } else {
+        std::cerr << "Warning: Could not get exposure capabilities. Error: 0x"
+                  << std::hex << ret << std::dec << std::endl;
+    }
+
+    ret = TUCAM_Prop_SetValue(hCamera_, TUIDP_EXPOSURETM, exposureMs);
     if (TUCAMRET_SUCCESS != ret) {
         std::cerr << "Error: Failed to set exposure time. Error code: 0x"
                   << std::hex << ret << std::dec << std::endl;
+
+        // Intentar obtener el valor actual
+        double currentExp = 0;
+        TUCAMRET getRet = TUCAM_Prop_GetValue(hCamera_, TUIDP_EXPOSURETM, &currentExp);
+        if (TUCAMRET_SUCCESS == getRet) {
+            std::cerr << "Current exposure: " << currentExp << " ms" << std::endl;
+        }
+
         return ConvertSDKError(ret);
     }
 

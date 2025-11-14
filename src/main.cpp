@@ -1,4 +1,6 @@
 #include "DhyanaCamera.h"
+#include "TUCamApi.h"
+#include "TUDefine.h"
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -8,6 +10,7 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <cstring>
 #include <filesystem>
 
 #ifdef _WIN32
@@ -130,6 +133,68 @@ std::vector<std::string> SplitCommand(const std::string& input) {
 }
 
 /**
+ * @brief Muestra capacidades de la cámara
+ */
+void ShowCameraCapabilities(Camera& camera) {
+    std::cout << "\n==================================================" << std::endl;
+    std::cout << "  Capacidades de la Camara" << std::endl;
+    std::cout << "==================================================" << std::endl;
+
+    // Esta función usa directamente la API del SDK para mostrar capacidades
+    HDTUCAM handle = camera.GetHandle();
+    if (handle == nullptr) {
+        std::cerr << "Error: Handle de camara no valido" << std::endl;
+        return;
+    }
+
+    // Capacidad de exposición
+    TUCAM_CAPA_ATTR capaAttr;
+    memset(&capaAttr, 0, sizeof(TUCAM_CAPA_ATTR));
+    capaAttr.idCapa = TUIDC_EXPOSURETM;
+
+    TUCAMRET ret = TUCAM_Capa_GetAttr(handle, &capaAttr);
+    if (TUCAMRET_SUCCESS == ret) {
+        std::cout << "\nExposicion:" << std::endl;
+        std::cout << "  Rango: " << capaAttr.dbValMin << " - "
+                  << capaAttr.dbValMax << " ms" << std::endl;
+        std::cout << "  Paso: " << capaAttr.dbValStep << " ms" << std::endl;
+        std::cout << "  Por defecto: " << capaAttr.dbValDft << " ms" << std::endl;
+    } else {
+        std::cout << "\nExposicion: NO SOPORTADA (Error: 0x"
+                  << std::hex << ret << std::dec << ")" << std::endl;
+    }
+
+    // Capacidad de ganancia
+    memset(&capaAttr, 0, sizeof(TUCAM_CAPA_ATTR));
+    capaAttr.idCapa = TUIDC_GAIN;
+    ret = TUCAM_Capa_GetAttr(handle, &capaAttr);
+    if (TUCAMRET_SUCCESS == ret) {
+        std::cout << "\nGanancia:" << std::endl;
+        std::cout << "  Rango: " << capaAttr.dbValMin << " - "
+                  << capaAttr.dbValMax << std::endl;
+        std::cout << "  Paso: " << capaAttr.dbValStep << std::endl;
+        std::cout << "  Por defecto: " << capaAttr.dbValDft << std::endl;
+    } else {
+        std::cout << "\nGanancia: NO SOPORTADA (Error: 0x"
+                  << std::hex << ret << std::dec << ")" << std::endl;
+    }
+
+    // Resolución
+    memset(&capaAttr, 0, sizeof(TUCAM_CAPA_ATTR));
+    capaAttr.idCapa = TUIDC_RESOLUTION;
+    ret = TUCAM_Capa_GetAttr(handle, &capaAttr);
+    if (TUCAMRET_SUCCESS == ret) {
+        int width = (capaAttr.nValMax >> 16) & 0xFFFF;
+        int height = capaAttr.nValMax & 0xFFFF;
+        std::cout << "\nResolucion:" << std::endl;
+        std::cout << "  Maxima: " << width << " x " << height << " pixels" << std::endl;
+    }
+
+    std::cout << "==================================================" << std::endl;
+    Log("Camera capabilities displayed");
+}
+
+/**
  * @brief Muestra ayuda del modo interactivo
  */
 void ShowInteractiveHelp() {
@@ -139,6 +204,7 @@ void ShowInteractiveHelp() {
     std::cout << "\nControl de Camara:" << std::endl;
     std::cout << "  info                      - Muestra informacion de la camara" << std::endl;
     std::cout << "  show                      - Muestra configuracion actual" << std::endl;
+    std::cout << "  caps                      - Muestra capacidades de la camara" << std::endl;
     std::cout << "\nConfiguracion:" << std::endl;
     std::cout << "  exposure <ms>             - Configura tiempo de exposicion" << std::endl;
     std::cout << "  gain <value>              - Configura ganancia" << std::endl;
@@ -153,6 +219,7 @@ void ShowInteractiveHelp() {
     std::cout << "  help, ?                   - Muestra esta ayuda" << std::endl;
     std::cout << "  quit, exit                - Sale del programa" << std::endl;
     std::cout << "\nEjemplos:" << std::endl;
+    std::cout << "  > caps" << std::endl;
     std::cout << "  > exposure 50" << std::endl;
     std::cout << "  > binning 2 2 avg" << std::endl;
     std::cout << "  > capture 10" << std::endl;
@@ -284,6 +351,9 @@ void RunInteractiveMode(Camera& camera) {
 
         } else if (cmd == "show") {
             ShowCurrentConfig(config);
+
+        } else if (cmd == "caps" || cmd == "capabilities") {
+            ShowCameraCapabilities(camera);
 
         } else if (cmd == "exposure") {
             if (tokens.size() < 2) {
