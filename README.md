@@ -13,6 +13,145 @@ Control de cámara Dhyana 2100 mediante línea de comandos (CLI) usando el SDK d
 - ✅ Tiempo total de adquisición
 - ✅ Guardado en múltiples formatos (TIFF, PNG, BMP, JPG)
 - ✅ Interfaz de línea de comandos intuitiva
+- ✅ Modo interactivo para control en tiempo real
+- ✅ Sistema de logging automático
+
+## 🚀 Guía Rápida de Despliegue a Nuevo Ordenador
+
+Esta sección te guía paso a paso para usar este programa en un ordenador nuevo que no tiene el entorno de desarrollo instalado.
+
+### Opción A: Solo Ejecutar (Ordenador de Producción)
+
+Si solo necesitas **ejecutar** el programa (no compilar):
+
+1. **Instalar SDK de Tucsen Photonics**
+   - Descargar el SDK de Tucsen desde [sitio oficial de Tucsen](https://www.tucsen.com)
+   - Instalar en la ruta por defecto: `C:\Program Files\TUCam_SDK\`
+   - Instalar los drivers de la cámara Dhyana
+
+2. **Configurar PATH del sistema (RECOMENDADO)**
+
+   Abrir PowerShell **como Administrador** y ejecutar:
+   ```powershell
+   # Agregar SDK de Tucsen al PATH
+   $tucsenPath = "C:\Program Files\TUCam_SDK\sdk\lib\x64"
+   [Environment]::SetEnvironmentVariable(
+       "Path",
+       [Environment]::GetEnvironmentVariable("Path", "Machine") + ";$tucsenPath",
+       "Machine"
+   )
+   Write-Host "PATH configurado correctamente" -ForegroundColor Green
+   ```
+
+3. **Copiar el ejecutable**
+   - Copiar `dhyana_control.exe` al nuevo PC
+   - Si NO configuraste el PATH, también copiar todas las DLLs del directorio Release
+
+4. **Verificar instalación**
+   ```powershell
+   # Abrir nueva ventana de PowerShell
+   .\dhyana_control.exe --help
+   ```
+
+### Opción B: Compilar en el Nuevo Ordenador
+
+Si necesitas **compilar** el programa:
+
+#### Paso 1: Instalar Herramientas
+
+1. **Visual Studio 2022**
+   - Descargar [Visual Studio 2022 Community](https://visualstudio.microsoft.com/downloads/)
+   - Durante instalación, seleccionar: **"Desktop development with C++"**
+   - Componentes necesarios:
+     - MSVC v143 - VS 2022 C++ x64/x86 build tools
+     - Windows 11 SDK
+     - CMake tools for Windows
+
+2. **Git (opcional, para clonar repositorio)**
+   - Descargar de [git-scm.com](https://git-scm.com/)
+   - Instalación por defecto
+
+3. **SDK de Tucsen**
+   - Instalar en: `C:\Program Files\TUCam_SDK\`
+   - Instalar drivers de cámara
+
+#### Paso 2: Clonar o Copiar el Proyecto
+
+**Opción 2.1: Clonar desde GitHub**
+```powershell
+git clone <url-del-repositorio>
+cd dhyana-camera-control
+```
+
+**Opción 2.2: Copiar archivos manualmente**
+- Copiar toda la carpeta del proyecto al nuevo PC
+
+#### Paso 3: Compilar el Proyecto
+
+```powershell
+# 1. Ir al directorio del proyecto
+cd dhyana-camera-control
+
+# 2. Crear directorio de compilación
+mkdir build
+cd build
+
+# 3. Configurar con CMake
+cmake .. -G "Visual Studio 17 2022" -A x64
+
+# 4. Compilar en modo Release
+cmake --build . --config Release
+
+# 5. El ejecutable estará en:
+# build\Release\dhyana_control.exe
+```
+
+#### Paso 4: Verificar DLLs (Solución de Problemas)
+
+Si el ejecutable da error de DLLs faltantes:
+
+```powershell
+# Opción 1: Ejecutar script de copia (desde raíz del proyecto)
+.\copy_all_runtimes.ps1 build\Release
+
+# Opción 2: Configurar PATH (recomendado)
+$tucsenPath = "C:\Program Files\TUCam_SDK\sdk\lib\x64"
+[Environment]::SetEnvironmentVariable(
+    "Path",
+    [Environment]::GetEnvironmentVariable("Path", "Machine") + ";$tucsenPath",
+    "Machine"
+)
+
+# Reiniciar PowerShell después de configurar PATH
+```
+
+#### Paso 5: Probar Instalación
+
+```powershell
+cd build\Release
+.\dhyana_control.exe --info
+```
+
+Si ves información de la cámara, ¡todo funciona correctamente! 🎉
+
+### ⚠️ Notas Importantes para Despliegue
+
+1. **DLLs de Runtime Necesarias:**
+   - Visual C++ 2013 (VC120): msvcp120.dll, msvcr120.dll
+   - Visual C++ 2015-2022 (VC140): msvcp140.dll, vcruntime140.dll, vcruntime140_1.dll
+   - Sistema Windows: msvfw32.dll, msacm32.dll, winmm.dll, mpr.dll
+
+2. **Diferencia PC Desarrollo vs Producción:**
+   - **PC con Visual Studio**: Las DLLs están en PATH automáticamente
+   - **PC sin Visual Studio**: Necesitas copiar DLLs o configurar PATH
+
+3. **Verificar Arquitectura:**
+   - Este programa es **64-bit (x64)**
+   - Asegúrate de usar DLLs de 64-bit
+
+4. **Firewall/Antivirus:**
+   - Si el programa no ejecuta, agregar excepción en Windows Defender
+   - Verificar que el antivirus no bloquea las DLLs
 
 ## Requisitos del Sistema
 
@@ -116,6 +255,92 @@ dhyana-camera-control/
 
 ## Uso
 
+El programa tiene **dos modos de operación**:
+
+### Modo Interactivo (Recomendado)
+
+Ejecutar sin argumentos para entrar en **modo interactivo**:
+
+```cmd
+dhyana_control.exe
+```
+
+El modo interactivo te permite:
+- ✅ Controlar la cámara en tiempo real
+- ✅ Cambiar parámetros sin reiniciar el programa
+- ✅ Tomar múltiples capturas con diferentes configuraciones
+- ✅ Ver ayuda de comandos disponibles
+- ✅ Registro automático de todas las operaciones en `output/session.log`
+
+**Comandos disponibles en modo interactivo:**
+
+| Comando | Descripción | Ejemplo |
+|---------|-------------|---------|
+| `help` o `?` | Muestra ayuda de comandos | `help` |
+| `info` | Muestra información de la cámara | `info` |
+| `exposure <ms>` | Configura tiempo de exposición | `exposure 100` |
+| `gain <value>` | Configura ganancia | `gain 2.5` |
+| `binning <x> <y> [mode]` | Configura binning (mode: avg/sum) | `binning 2 2 avg` |
+| `roi <x> <y> <w> <h>` | Configura región de interés | `roi 100 100 512 512` |
+| `roi reset` | Resetea ROI a sensor completo | `roi reset` |
+| `capture [n]` | Captura n frames (default: 1) | `capture 10` |
+| `format <fmt>` | Configura formato (TIFF/PNG/BMP/JPG) | `format PNG` |
+| `output <path>` | Configura directorio de salida | `output ./data` |
+| `show` | Muestra configuración actual | `show` |
+| `quit` o `exit` | Sale del programa | `quit` |
+
+**Ejemplo de sesión interactiva:**
+
+```
+$ dhyana_control.exe
+
+=====================================
+  Dhyana Camera Control v1.0.0
+  Modo Interactivo
+=====================================
+
+Inicializando SDK...
+Abriendo cámara...
+Cámara conectada: Dhyana 2100
+
+Escribe 'help' para ver comandos disponibles.
+
+> help
+Comandos disponibles:
+  help           - Muestra esta ayuda
+  info           - Información de la cámara
+  exposure <ms>  - Configura exposición
+  ...
+
+> exposure 50
+Exposición configurada: 50.0 ms
+
+> binning 2 2 avg
+Binning configurado: 2x2 (modo promedio)
+
+> capture 5
+Capturando 5 frames...
+  Frame 1/5 guardado: output/frame_001.tif
+  Frame 2/5 guardado: output/frame_002.tif
+  ...
+Captura completada.
+
+> exposure 100
+Exposición configurada: 100.0 ms
+
+> capture 3
+Capturando 3 frames...
+  ...
+
+> quit
+Cerrando cámara...
+Sesión terminada.
+```
+
+### Modo de Línea de Comandos (Legacy)
+
+También puedes ejecutar capturas directamente con argumentos:
+
 ### Ayuda
 
 ```cmd
@@ -128,7 +353,7 @@ dhyana_control.exe --help
 dhyana_control.exe --info
 ```
 
-### Ejemplos de Uso
+### Ejemplos de Uso en Modo Línea de Comandos
 
 #### 1. Captura simple con exposición de 50ms
 
