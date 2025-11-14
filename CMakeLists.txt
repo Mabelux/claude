@@ -118,6 +118,23 @@ if(WIN32)
 
     message(STATUS "Runtime DLLs will be copied automatically during build")
     message(STATUS "Note: If build succeeds but executable fails to run, ensure Visual C++ Redistributables are installed")
+
+    # 3. Copiar directorio engine/ desde SDK de Tucsen instalado (contiene archivos .dat)
+    set(TUCSEN_ENGINE_PATH "C:/Program Files/TUCam_SDK/sdk/lib/All_x64/engine")
+    if(EXISTS "${TUCSEN_ENGINE_PATH}")
+        add_custom_command(TARGET dhyana_control POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory
+                "$<TARGET_FILE_DIR:dhyana_control>/engine"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${TUCSEN_ENGINE_PATH}"
+                "$<TARGET_FILE_DIR:dhyana_control>/engine"
+            COMMENT "Copying engine directory from Tucsen SDK"
+        )
+        message(STATUS "Will copy engine directory from: ${TUCSEN_ENGINE_PATH}")
+    else()
+        message(WARNING "Tucsen SDK engine directory not found at: ${TUCSEN_ENGINE_PATH}")
+        message(WARNING "You may need to manually copy engine/*.dat files to the executable directory")
+    endif()
 endif()
 
 # Configuración de instalación
