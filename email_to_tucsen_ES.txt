@@ -1,0 +1,70 @@
+Para: service@tucsen.com
+Asunto: Solicitud de archivo de configuración Dhyana 2100.dat
+
+Estimado equipo de soporte de Tucsen,
+
+Estoy desarrollando una aplicación personalizada en C++ usando el SDK de TUCAM para controlar una cámara Dhyana 2100, pero me encuentro con un problema crítico.
+
+PROBLEMA:
+Cuando ejecuto mi aplicación, el SDK reporta:
+  [TUCSEN]: C:\Users\...\engine\Dhyana 2100.dat does not exist !
+
+Como resultado:
+- La cámara se abre correctamente pero no puede leer información del modelo (devuelve todos ceros)
+- Todas las propiedades de la cámara (exposición, ganancia, etc.) devuelven error 0x80000312 (NOT_SUPPORTED)
+- La cámara parece requerir este archivo .dat específico para funcionar correctamente
+
+INFORMACIÓN DEL SISTEMA:
+- Modelo de cámara: Dhyana 2100
+- Versión del SDK: TUCam SDK (última versión instalada desde su sitio web)
+- Sistema operativo: Windows 10 64-bit
+- Entorno de desarrollo: Visual Studio 2022, C++17
+
+LO QUE HE ENCONTRADO:
+- Mi instalación del SDK contiene "Libra 3412C.dat" en el directorio engine
+- Pero falta "Dhyana 2100.dat"
+- Su software oficial (TCapture/ISCapture) funciona perfectamente con la cámara
+- Esto sugiere que el archivo .dat existe en el software completo pero no en mi instalación del SDK
+
+LO QUE HE INTENTADO:
+1. Reinstalar el SDK de TUCAM
+2. Buscar en todo el directorio de instalación
+3. Revisar el USB que vino con la cámara
+
+SOLICITUD:
+¿Podrían proporcionarme el archivo "Dhyana 2100.dat" o guiarme sobre cómo obtenerlo?
+
+Este archivo parece ser esencial para:
+- Identificación del modelo de cámara
+- Rangos válidos de parámetros (exposición, ganancia)
+- Configuración de capacidades del sensor
+- Datos de calibración de fábrica
+
+Alternativamente, si hay un paquete específico del SDK u opción de instalación que debo usar para asegurarme de que este archivo esté incluido, por favor háganmelo saber.
+
+Agradezco su ayuda.
+
+Saludos cordiales,
+[Tu Nombre]
+[Tu Empresa/Institución - si aplica]
+[Tu información de contacto]
+
+---
+
+DETALLES TÉCNICOS ADICIONALES (si los solicitan):
+
+El SDK ejecuta exitosamente:
+- TUCAM_Dev_Open() - la cámara se abre y el handle es válido
+- TUCAM_Buf_Alloc() - la asignación del buffer tiene éxito
+- TUCAM_Cap_SetTrigger() - la configuración del trigger tiene éxito
+
+Pero falla sin el archivo .dat:
+- TUCAM_Dev_GetInfo(TUIDI_CAMERA_MODEL) devuelve error 0x1
+- TUCAM_Prop_GetAttr(TUIDP_EXPOSURETM) devuelve error 0x80000312 (TUCAMRET_NOT_SUPPORT)
+- TUCAM_Prop_GetAttr(TUIDP_GLOBALGAIN) devuelve error 0x80000312 (TUCAMRET_NOT_SUPPORT)
+
+Estructura de directorios esperada:
+Mi aplicación busca el archivo en:
+  [Directorio de la aplicación]\engine\Dhyana 2100.dat
+
+Basándome en la estructura del SDK, esta parece ser la ubicación correcta.
