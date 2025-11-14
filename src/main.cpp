@@ -360,7 +360,7 @@ void RunInteractiveMode(Camera& camera) {
                 Log("ERROR: roi command missing parameters");
             } else if (tokens[1] == "reset") {
                 config.enableROI = false;
-                ErrorCode err = camera.ResetROI();
+                ErrorCode err = camera.DisableROI();
                 if (err == ErrorCode::Success) {
                     std::cout << "ROI reseteada a sensor completo" << std::endl;
                     Log("ROI reset to full sensor");
@@ -432,9 +432,9 @@ void RunInteractiveMode(Camera& camera) {
 
             if (err == ErrorCode::Success) {
                 std::cout << "Captura completada exitosamente!" << std::endl;
-                std::cout << "  Frames capturados: " << stats.framesAcquired << std::endl;
+                std::cout << "  Frames capturados: " << stats.framesCaptured << std::endl;
                 std::cout << "  Guardados en: " << config.outputPath << std::endl;
-                Log("Capture completed successfully: " + std::to_string(stats.framesAcquired) + " frames");
+                Log("Capture completed successfully: " + std::to_string(stats.framesCaptured) + " frames");
             } else {
                 std::cerr << "Error en captura: " << ErrorCodeToString(err) << std::endl;
                 Log("ERROR: Capture failed - " + std::string(ErrorCodeToString(err)));
@@ -738,7 +738,7 @@ int main(int argc, char* argv[]) {
     std::cout << "  CAPTURA COMPLETADA EXITOSAMENTE!" << std::endl;
     std::cout << "==================================================" << std::endl;
 
-    Log("Capture completed successfully - " + std::to_string(stats.framesAcquired) + " frames");
+    Log("Capture completed successfully - " + std::to_string(stats.framesCaptured) + " frames");
     CloseLogger();
     PauseBeforeExit();
     return 0;
