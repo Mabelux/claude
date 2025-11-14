@@ -100,6 +100,7 @@ ErrorCode Camera::Open(uint32_t cameraIndex)
 
     // Inicialización básica de la cámara después de abrirla
     // Esto es necesario para que las propiedades funcionen correctamente
+    std::cout << "Initializing camera..." << std::endl;
 
     // 1. Asignar buffer temporal para permitir configuración
     TUCAM_FRAME frame;
@@ -107,11 +108,14 @@ ErrorCode Camera::Open(uint32_t cameraIndex)
     frame.ucFormatGet = TUFRM_FMT_RAW;
     frame.uiRsdSize = 1;  // 1 buffer temporal
 
+    std::cout << "  Allocating buffer..." << std::endl;
     ret = TUCAM_Buf_Alloc(hCamera_, &frame);
     if (TUCAMRET_SUCCESS != ret) {
-        std::cerr << "Warning: Failed to allocate initial buffer. Error: 0x"
+        std::cerr << "  ERROR: Failed to allocate initial buffer. Error: 0x"
                   << std::hex << ret << std::dec << std::endl;
-        // No es crítico, continuamos
+        std::cerr << "  Camera may not work properly!" << std::endl;
+    } else {
+        std::cout << "  Buffer allocated successfully." << std::endl;
     }
 
     // 2. Configurar modo de trigger a software (modo libre)
@@ -122,14 +126,35 @@ ErrorCode Camera::Open(uint32_t cameraIndex)
     triggerAttr.nEdgeMode = TUCTD_RISING;   // Flanco ascendente
     triggerAttr.nFrames = 1;                // 1 frame por trigger
 
+    std::cout << "  Setting trigger mode to SEQUENCE..." << std::endl;
     ret = TUCAM_Cap_SetTrigger(hCamera_, triggerAttr);
     if (TUCAMRET_SUCCESS != ret) {
-        std::cerr << "Warning: Failed to set trigger mode. Error: 0x"
+        std::cerr << "  ERROR: Failed to set trigger mode. Error: 0x"
                   << std::hex << ret << std::dec << std::endl;
-        // No es crítico, continuamos
+        std::cerr << "  Camera may not work properly!" << std::endl;
+    } else {
+        std::cout << "  Trigger mode set successfully." << std::endl;
     }
 
-    std::cout << "Camera initialized and ready." << std::endl;
+    // 3. Intentar obtener información básica de la cámara como prueba
+    TUCAM_VALUE_INFO valueInfo;
+    memset(&valueInfo, 0, sizeof(TUCAM_VALUE_INFO));
+    char modelBuffer[64] = {0};
+    valueInfo.nID = TUIDI_CAMERA_MODEL;
+    valueInfo.pText = modelBuffer;
+    valueInfo.nTextSize = sizeof(modelBuffer);
+
+    std::cout << "  Testing camera communication..." << std::endl;
+    ret = TUCAM_Dev_GetInfo(hCamera_, &valueInfo);
+    if (TUCAMRET_SUCCESS == ret && modelBuffer[0] != '\0') {
+        std::cout << "  Camera model detected: " << modelBuffer << std::endl;
+    } else {
+        std::cerr << "  WARNING: Could not get camera model. Error: 0x"
+                  << std::hex << ret << std::dec << std::endl;
+    }
+
+    std::cout << "Camera initialization complete." << std::endl;
+    std::cout << "If you see errors above, the camera may not be fully initialized." << std::endl;
 
     return ErrorCode::Success;
 }
